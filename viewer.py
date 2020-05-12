@@ -20,7 +20,7 @@ class Viewer():
 		self.window.raise_()
 		self.uav_mesh, self.uav_colors = self.draw_uav()
 
-	def update(self):
+	def update(self, simulation_state, aircraft_state):
 		self.body.setMeshData(vertexes=self.uav_mesh, faceColors=self.uav_colors)
 		self.app.processEvents()
 
