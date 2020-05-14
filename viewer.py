@@ -7,31 +7,66 @@ class Viewer():
 	def __init__(self, simulation_state, aircraft_state):
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
+		self.define_colors()
 		self.app = pg.QtGui.QApplication([])
 		self.window = gl.GLViewWidget()
+		self.left_winglet_trail = gl.GLLinePlotItem(color=tuple(self.red.tolist()), width=3, antialias=True, mode="line_strip")
+		self.right_winglet_trail = gl.GLLinePlotItem(color=tuple(self.green.tolist()), width=3, antialias=True, mode="line_strip")
+		self.left_winglet_trail.setGLOptions('translucent')
+		self.right_winglet_trail.setGLOptions('translucent')
 		self.window.setWindowTitle("Viewer")
 		self.window.setGeometry(0, 0, 750, 750)
 		ground = gl.GLGridItem(color='k')
 		ground.scale(10, 10, 0)
 		self.body = gl.GLMeshItem(drawEdges=False, smooth=False, computeNormals=False)
-		self.window.addItem(self.body)
 		self.window.addItem(ground)
+		self.window.addItem(self.left_winglet_trail)
+		self.window.addItem(self.right_winglet_trail)
+		self.window.addItem(self.body)
 		self.window.setCameraPosition(distance = 20);
 		self.window.setBackgroundColor('w')
 		self.window.show()
 		self.window.raise_()
 		self.uav_colors = self.get_uav_mesh_colors()
 
+	def define_colors(self):
+		self.red = np.array([1., 0., 0., 1])
+		self.green = np.array([0., 0.5, 0., 1])
+		self.blue = np.array([0., 0., 1., 1])
+		self.yellow = np.array([1., 1., 0., 1])
+
 	def update(self):
-		#self.uav_points = self.vehicle_two_to_body() @  self.vehicle_one_to_vehicle_two() @ self.vehicle_to_vehicle_one() @ self.get_uav_points()
-		#self.uav_points = self.uav_points.T
-		self.rotate()
-		self.uav_mesh = self.get_uav_mesh(self.uav_points.T)
+		# Draw the UAV
+		self.uav_points = self.get_uav_points()
+		self.uav_points = self.translate(self.uav_points)
+		self.uav_points = self.rotate(self.uav_points)
+		self.uav_mesh = self.get_uav_mesh(self.uav_points)
 		self.body.setMeshData(vertexes=self.uav_mesh, faceColors=self.uav_colors)
+		# Logging
+		self.winglet_log(self.uav_points)
+		# Draw winglet trails
+		self.draw_winglet_trails(self.simulation_state.left_winglet_log, self.simulation_state.right_winglet_log)
+		# Render
 		self.app.processEvents()
 
-	def rotate(self):
-		self.uav_points = self.inertial_to_body() @ self.get_uav_points().T
+	def winglet_log(self, points):
+		right_loc = points[5]
+		left_loc = points[4]
+		self.simulation_state.right_winglet_log = np.append(self.simulation_state.right_winglet_log, [right_loc], axis=0)
+		self.simulation_state.left_winglet_log = np.append(self.simulation_state.left_winglet_log, [left_loc], axis=0)
+
+	def draw_winglet_trails(self, left_trail, right_trail):
+		points = int(self.simulation_state.trail_length/self.simulation_state.delta)
+		if(self.simulation_state.show_winglet_trails):
+			self.right_winglet_trail.setData(pos=right_trail[-points:])
+		if(self.simulation_state.show_winglet_trails):
+			self.left_winglet_trail.setData(pos=left_trail[-points:])
+
+	def translate(self, model):
+		return model + np.array([self.aircraft_state.get_n(), self.aircraft_state.get_e(), -self.aircraft_state.get_d()]).T
+
+	def rotate(self, model):
+		return (self.inertial_to_body() @ model.T).T
 
 	def get_uav_points(self, scale=10):
 		points = np.array([
@@ -59,14 +94,10 @@ class Viewer():
 		return mesh
 
 	def get_uav_mesh_colors(self):
-		red = np.array([1., 0., 0., 1])
-		green = np.array([0., 1., 0., 1])
-		blue = np.array([0., 0., 1., 1])
-		yellow = np.array([1., 1., 0., 1])
-		red = np.array([red, red, red])
-		green = np.array([green, green, green])
-		blue = np.array([blue, blue, blue])
-		yellow = np.array([yellow, yellow, yellow])
+		red = np.array([self.red, self.red, self.red])
+		green = np.array([self.green, self.green, self.green])
+		blue = np.array([self.blue, self.blue, self.blue])
+		yellow = np.array([self.yellow, self.yellow, self.yellow])
 		colors = np.array([
 			blue, blue, blue, blue, red, green
 		])

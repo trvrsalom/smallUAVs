@@ -3,9 +3,9 @@ import math
 
 class AircraftState:
 	# Inertial Position (meters)
-	pn: float = 0    # North
-	pe: float = 0    # East
-	h: float = 0     # Altitude
+	n: float = 0     # North
+	e: float = 0     # East
+	d: float = 0     # Altitude
 	# Attitude (ang_units[/sec])
 	phi: float = 0   # Roll
 	theta: float = 0 # Pitch
@@ -26,7 +26,7 @@ class AircraftState:
 	bx: float = 0    # Gyro bias roll axis
 	by: float = 0    # Gyro bias pitch axis
 	bz: float = 0    # Gyro bias yaw axis
-	#units
+	# Units
 	ang_units: str = "deg"
 
 	def get_phi(self):
@@ -43,4 +43,13 @@ class AircraftState:
 		if(self.ang_units == "deg"):
 			return math.radians(self.psi)
 		return self.psi
+
+	def get_n(self):
+		return self.n
+
+	def get_e(self):
+		return self.e
+
+	def get_d(self):
+		return self.d
 
