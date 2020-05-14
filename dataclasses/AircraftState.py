@@ -1,11 +1,12 @@
-import dataclasses 
+import dataclasses
+import math
 
 class AircraftState:
 	# Inertial Position (meters)
 	pn: float = 0    # North
 	pe: float = 0    # East
 	h: float = 0     # Altitude
-	# Attitude (radians[/sec])
+	# Attitude (ang_units[/sec])
 	phi: float = 0   # Roll
 	theta: float = 0 # Pitch
 	psi: float = 0   # Yaw
@@ -21,7 +22,25 @@ class AircraftState:
 	va: float = 0    # Airspeed
 	wn: float = 0    # Inertial windspeed north
 	we: float = 0    # Inertial windspeed east
-	# Bias (radians/second)
+	# Bias (ang_units/second)
 	bx: float = 0    # Gyro bias roll axis
 	by: float = 0    # Gyro bias pitch axis
 	bz: float = 0    # Gyro bias yaw axis
+	#units
+	ang_units: str = "deg"
+
+	def get_phi(self):
+		if(self.ang_units == "deg"):
+			return math.radians(self.phi)
+		return self.phi
+
+	def get_theta(self):
+		if(self.ang_units == "deg"):
+			return math.radians(self.theta)
+		return self.theta
+
+	def get_psi(self):
+		if(self.ang_units == "deg"):
+			return math.radians(self.psi)
+		return self.psi
+
