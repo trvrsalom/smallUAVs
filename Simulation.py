@@ -6,6 +6,7 @@ from dataclasses.AircraftState import AircraftState
 from dataclasses.Zagi import Zagi
 from utils import angles
 import numpy as np
+import math
 import Simulation
 
 class Simulation:
@@ -57,14 +58,13 @@ class Simulation:
 		# Create a temporary state with quaternions instead of euler coordinates.
 		# Also math will be easier with an array than an object
 		state = self.aircraft_state
-		e = angles.euler_to_quaternion(state.get_phi(), state.get_theta(), state.get_psi())
+		#e = angles.euler_to_quaternion(state.get_phi(), state.get_theta(), state.get_psi())
 
 		quat_state = np.array([
 			state.get_pn(), state.get_pe(), state.get_pd(),
 			state.get_u(), state.get_v(), state.get_w(),
-			e[0], e[1], e[2], e[3],
+			state.get_phi(), state.get_theta(), state.get_psi(),
 			state.get_p(), state.get_q(), state.get_r()])
-		#print(*quat_state[6:10])
 		# RK4
 		h = self.simulation_state.delta
 		k1 = h*self.find_dots(quat_state)
@@ -73,30 +73,29 @@ class Simulation:
 		k4 = h*self.find_dots(quat_state + k3)
 		ksum = (h/6.)*(k1 + 2.*k2 + 2.*k3 + k4)
 		next_state = quat_state + ksum
-		print(*ksum[6:10])
 
 		# Make sure that it's a unit quaternion. [1] Appendix B
-		next_state[6:10] = angles.normal(*next_state[6:10])
+		#next_state[6:10] = angles.normal(*next_state[6:10])
 
 		# Finally, update state
-		phi,theta,psi = angles.quaternion_to_euler(*next_state[6:10])
+		#phi,theta,psi = angles.quaternion_to_euler(*next_state[6:10])
 		self.aircraft_state.pn = next_state[0]
 		self.aircraft_state.pe = next_state[1]
 		self.aircraft_state.pd = next_state[2]
 		self.aircraft_state.u = next_state[3]
 		self.aircraft_state.v = next_state[4]
 		self.aircraft_state.w = next_state[5]
-		self.aircraft_state.phi = phi
-		self.aircraft_state.theta = theta
-		self.aircraft_state.psi = psi
-		self.aircraft_state.p = next_state[10]
-		self.aircraft_state.q = next_state[11]
-		self.aircraft_state.r = next_state[12]
+		self.aircraft_state.phi = next_state[6]
+		self.aircraft_state.theta = next_state[7]
+		self.aircraft_state.psi = next_state[8]
+		self.aircraft_state.p = next_state[9]
+		self.aircraft_state.q = next_state[10]
+		self.aircraft_state.r = next_state[11]
 
 	def find_dots(self, state): 
 		# Find the derivatives of the internal state array from state forces
 		# Unpack the state array
-		pn,pe,pd,u,v,w,e0,e1,e2,e3,p,q,r = state
+		pn,pe,pd,u,v,w,phi,theta,psi,p,q,r = state
 		fx = self.aircraft_state.fx
 		fy = self.aircraft_state.fy
 		fz = self.aircraft_state.fz
@@ -106,24 +105,31 @@ class Simulation:
 		airframe = self.aircraft_state.airframe
 		mass = airframe.m
 		# Body velocities to inertial translation
+		ctheta = math.cos(theta)
+		cpsi = math.cos(psi)
+		cphi = math.cos(phi)
+		stheta = math.sin(theta)
+		spsi = math.sin(psi)
+		sphi = math.sin(phi)
+		ttheta = math.tan(theta)
+		sectheta = 1/math.cos(theta)
 		body_vel_inertial_pos_matrix = np.array([
-			[e1**2 + e0**2 - e2**2 - e3**2, 2*(e1*e2 - e3*e0), 2*(e1*e3 + e2*e0)],
-			[2*(e1*e2 + e3*e0), e2**2 + e0**2 - e1**2 - e3**2, 2*(e2*e3 - e1*e0)],
-			[2*(e1*e3 - e2*e0), 2*(e2*e3 + e1*e0), e3**2 + e0**2 - e1**2 - e2**2]
+			[ctheta*cpsi, sphi*stheta*cpsi - cphi*spsi, cphi*stheta*cpsi + sphi*spsi],
+			[ctheta*spsi, sphi*stheta*spsi + cphi*cpsi, cphi*stheta*spsi - sphi*cpsi],
+			[-stheta, sphi*ctheta, cphi*ctheta]
 		])
 		pn_dot,pe_dot,pd_dot = (body_vel_inertial_pos_matrix @ np.array([u,v,w]).T).T
 
 		# Moments to velocities
 		u_dot,v_dot,w_dot = np.array([r*v-q*w, p*w-r*u, q*u-p*v]) + np.array([fx,fy,fz])/mass
 
-		# Quaternion dots
-		quaternion_to_quaternion_dot_matrix = 0.5*np.array([
-			[0, -p, -q,  r],
-			[p,  0,  r, -q],
-			[q, -r,  0,  p],
-			[r,  q, -p,  0]
+		# attitude dots
+		att_to_att_dot_matrix = np.array([
+			[1, sphi*ttheta, cphi*ttheta],
+			[0, cphi, -sphi],
+			[0, sphi*sectheta, cphi*sectheta]
 		])
-		e0_dot,e1_dot,e2_dot,e3_dot = (quaternion_to_quaternion_dot_matrix @ np.array([e0,e1,e2,e3]).T).T
+		phi_dot,theta_dot,psi_dot = (att_to_att_dot_matrix @ np.array([p,q,r]).T).T
 
 		# Attitude accelerations
 		attitude_accel_a = np.array([airframe.gamma1*p*q - airframe.gamma2*q*r, 
@@ -134,7 +140,7 @@ class Simulation:
 		state_dot = np.array([
 			pn_dot, pe_dot, pd_dot,
 			u_dot, v_dot, w_dot,
-			e0_dot, e1_dot, e2_dot, e3_dot,
+			phi_dot, theta_dot, psi_dot,
 			p_dot, q_dot, r_dot])
 		return state_dot
 
