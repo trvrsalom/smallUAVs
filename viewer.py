@@ -67,7 +67,7 @@ class Viewer():
 	def rotate(self, model):
 		return (self.inertial_to_body() @ model.T).T
 
-	def get_uav_points(self, scale=0.5):
+	def get_uav_points(self, scale=1):
 		points = np.array([
 			[.5, 0, 0],      # Nose 0
 			[0, 1, 0],       # Leading Edge Left 1
