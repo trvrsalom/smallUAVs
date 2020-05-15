@@ -32,3 +32,18 @@ class Log:
 			if title in self.data_names:
 				idx = self.data_names.index(title)
 				return self.data_points[idx]
+
+	def export_csv(self, file):
+		f = open(file, "w")
+		line = ""
+		for title in self.get_data_sets():
+			line = line + str(title) + ","
+		line = line[:-1] + "\n"
+		f.write(line)
+		for i in range(0,len(self.time_points)):
+			line = ""
+			for title in self.get_data_sets():
+				line = line + str(self.get_data_set(title)[i]) + ","
+			line = line[:-1] + "\n"
+			f.write(line)
+		f.close()

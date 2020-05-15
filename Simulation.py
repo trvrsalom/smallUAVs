@@ -59,6 +59,7 @@ class Simulation:
 		self.log = log
 
 	def sim_loop(self):
+		print("Starting simulation.")
 		while self.simulation_state.curr_time <= self.simulation_state.time:
 			# Check the control file for updates
 			if self.sim is not None:
@@ -76,7 +77,15 @@ class Simulation:
 				self.plotter.update_plots()
 			self.simulation_state.curr_time += self.simulation_state.delta
 			self.app.processEvents()
+			print("Simulated time: {:.0F}s - {:.2%}".format(self.simulation_state.curr_time, self.simulation_state.curr_time/self.simulation_state.time), end='\r', flush=True)
+		print("")
 		print("Simulation completed.")
+
+	def export_logs(self): 
+		file = "log.csv"
+		print("Writing log to " + file)
+		self.log.export_csv(file)
+		print("Finished writing log file.")
 
 	def run(self):
 		if self.simulation_state.show_viewer:
@@ -85,11 +94,15 @@ class Simulation:
 			self.plotter = Plotter(self.log, self.app)
 		self.load_state()
 		self.sim_loop()
+		self.export_logs()
 		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
 			input("Press enter to quit.")
-		pg.exit()
-		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
-			self.app.quit()
+		try:
+			# Hoping to catch the gross pyqt errors here
+			if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
+				self.app.quit()
+		except: 
+			pass
 
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.
@@ -104,12 +117,12 @@ class Simulation:
 			state.get_p(), state.get_q(), state.get_r()])
 		# RK4
 		h = self.simulation_state.delta
-		k1 = h*self.find_dots(quat_state)
-		k2 = h*self.find_dots(quat_state + (h/2.)*k1)
-		k3 = h*self.find_dots(quat_state + (h/2.)*k2)
-		k4 = h*self.find_dots(quat_state + k3)
+		k1 = self.find_dots(quat_state)
+		k2 = self.find_dots(quat_state + (h/2.)*k1)
+		k3 = self.find_dots(quat_state + (h/2.)*k2)
+		k4 = self.find_dots(quat_state + h*k3)
 		ksum = (h/6.)*(k1 + 2.*k2 + 2.*k3 + k4)
-		next_state = quat_state + ksum
+		next_state = quat_state + ksum#h*self.find_dots(quat_state)#ksum
 
 		# Make sure that it's a unit quaternion. [1] Appendix B
 		#next_state[6:10] = angles.normal(*next_state[6:10])
