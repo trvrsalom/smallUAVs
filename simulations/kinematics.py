@@ -10,4 +10,4 @@ class Sim:
 	def update(self):
 		#self.aircraft_state.n = 10
 		#self.aircraft_state.fy = 10
-		self.aircraft_state.v = 1
+		self.aircraft_state.w = 1

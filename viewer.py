@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
-import pyqtgraph.Vector
+import pyqtgraph.Vector as Vector
 import numpy as np
 
 class Viewer():
@@ -24,11 +24,14 @@ class Viewer():
 		self.window.addItem(self.left_winglet_trail)
 		self.window.addItem(self.right_winglet_trail)
 		self.window.addItem(self.body)
-		self.window.setCameraPosition(distance = 20);
+		self.window.setCameraPosition(distance = 5);
 		self.window.setBackgroundColor('k')
 		self.window.show()
 		self.window.raise_()
 		self.uav_colors = self.get_uav_mesh_colors()
+
+	def center_camera(self):
+		self.window.opts["center"] = Vector(self.aircraft_state.pn, self.aircraft_state.pe, -self.aircraft_state.pd)
 
 	def define_colors(self):
 		self.red = np.array([1., 0., 0., 1])
@@ -47,6 +50,7 @@ class Viewer():
 		self.winglet_log(self.uav_points)
 		# Draw winglet trails
 		self.draw_winglet_trails(self.simulation_state.left_winglet_log, self.simulation_state.right_winglet_log)
+		self.center_camera()
 
 	def winglet_log(self, points):
 		right_loc = points[5]
@@ -55,7 +59,7 @@ class Viewer():
 		self.simulation_state.left_winglet_log = np.append(self.simulation_state.left_winglet_log, [left_loc], axis=0)
 
 	def draw_winglet_trails(self, left_trail, right_trail):
-		points = int(self.simulation_state.trail_length/self.simulation_state.delta)
+		points = max(int(self.simulation_state.trail_length/self.simulation_state.delta), 5)
 		if(self.simulation_state.show_winglet_trails):
 			self.right_winglet_trail.setData(pos=right_trail[-points:])
 		if(self.simulation_state.show_winglet_trails):
