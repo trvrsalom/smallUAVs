@@ -63,7 +63,7 @@ class Viewer():
 			self.left_winglet_trail.setData(pos=left_trail[-points:])
 
 	def translate(self, model):
-		return model + np.array([self.aircraft_state.get_n(), self.aircraft_state.get_e(), -self.aircraft_state.get_d()]).T
+		return model + np.array([self.aircraft_state.get_pn(), self.aircraft_state.get_pe(), -self.aircraft_state.get_pd()]).T
 
 	def rotate(self, model):
 		return (self.inertial_to_body() @ model.T).T

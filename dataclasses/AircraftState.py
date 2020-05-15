@@ -3,32 +3,36 @@ import math
 
 class AircraftState:
 	# Inertial Position (meters)
-	n: float = 0     # North
-	e: float = 0     # East
-	d: float = 0     # Altitude
-	# Attitude (ang_units[/sec])
+	pn: float = 0    # North
+	pe: float = 0    # East
+	pd: float = 0    # Altitude
+	# Attitude (ang_units)
 	phi: float = 0   # Roll
 	theta: float = 0 # Pitch
 	psi: float = 0   # Yaw
-	alpha: float = 0 # Angle of Attack
-	beta: float = 0  # Slideslip Angle
+	# Attitude rates (ang_unts/second)
 	p: float = 0     # Roll rate
 	q: float = 0     # pitch rate
 	r: float = 0     # Yaw rate
-	gamma: float = 0 # Flight path
-	chi: float = 0   # Course angle
-	# Speed (meters/second)
-	vg: float = 0    # Groundspeed
-	va: float = 0    # Airspeed
-	wn: float = 0    # Inertial windspeed north
-	we: float = 0    # Inertial windspeed east
-	# Bias (ang_units/second)
-	bx: float = 0    # Gyro bias roll axis
-	by: float = 0    # Gyro bias pitch axis
-	bz: float = 0    # Gyro bias yaw axis
+	# Body frame velocity (meters/second)
+	u: float = 0     # i velocity (forward)
+	v: float = 0     # j velocity (right)
+	w: float = 0     # k velocity (down) 
+	# Body frame forces (N)
+	fx: float = 0    # X force
+	fy: float = 0    # Y force
+	fz: float = 0    # Z force
+	# Body moments (Nm)
+	l: float = 0     # Moment about i 
+	m: float = 0     # Moment about j
+	n: float = 0     # Moment about k
 	# Units
-	ang_units: str = "deg"
+	ang_units: str = "rad"
 
+
+	# Defining getters so that we can switch units on the fly.
+	# Internal simulation/visualization units will be np defaults.
+	# Will also need setters, which I forgot todo in advance, so that'll suck
 	def get_phi(self):
 		if(self.ang_units == "deg"):
 			return math.radians(self.phi)
@@ -44,12 +48,33 @@ class AircraftState:
 			return math.radians(self.psi)
 		return self.psi
 
-	def get_n(self):
-		return self.n
+	def get_pn(self):
+		return self.pn
 
-	def get_e(self):
-		return self.e
+	def get_pe(self):
+		return self.pe
 
-	def get_d(self):
-		return self.d
+	def get_pd(self):
+		return self.pd
+
+	def get_u(self):
+		return self.u
+
+	def get_v(self):
+		return self.v
+
+	def get_w(self):
+		return self.w
+
+	def get_p(self):
+		return self.p
+
+	def get_q(self):
+		return self.q
+
+	def get_r(self):
+		return self.r
+
+	def set_airframe(self, airframe):
+		self.airframe = airframe
 

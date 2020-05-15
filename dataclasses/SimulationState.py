@@ -6,12 +6,14 @@ class SimulationState:
 	time: float = 5      # Simulation runtime in seconds
 	delta: float = 0.02  # Simulation delta in seconds
 	curr_time: float = 0  # Current simulation time in seconds
+	# Show simulation viewer
+	show_viewer: bool = True
 	# Log
 	# - Winglet Trails
 	right_winglet_log: ndarray = empty((1,3))
 	left_winglet_log: ndarray = empty((1,3))
 	show_winglet_trails: bool = True
-	trail_length: float = 5 # Seconds
+	trail_length: float = 60 # Seconds
 
 	def __str__(self):
 		ret = "Simulation State:"

@@ -9,20 +9,21 @@ class Sim:
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
 		self.simulation_state.trail_length = 7*self.len
+		self.aircraft_state.ang_units = "deg"
 		
 	def update(self):
 		if self.simulation_state.curr_time <= self.len:
-			self.aircraft_state.n += self.delta*self.speed
+			self.aircraft_state.pn += self.delta*self.speed
 		elif self.simulation_state.curr_time <= 2*self.len:
-			self.aircraft_state.e += self.delta*self.speed
+			self.aircraft_state.pe += self.delta*self.speed
 		elif self.simulation_state.curr_time <= 3*self.len:
-			self.aircraft_state.d += self.delta*self.speed
+			self.aircraft_state.pd += self.delta*self.speed
 		elif self.simulation_state.curr_time <= 4*self.len:
-			self.aircraft_state.n -= self.delta*self.speed
+			self.aircraft_state.pn -= self.delta*self.speed
 		elif self.simulation_state.curr_time <= 5*self.len:
-			self.aircraft_state.e -= self.delta*self.speed
+			self.aircraft_state.pe -= self.delta*self.speed
 		elif self.simulation_state.curr_time <= 6*self.len:
-			self.aircraft_state.d -= self.delta*self.speed
+			self.aircraft_state.pd -= self.delta*self.speed
 
 		if self.simulation_state.curr_time <= 5:
 			self.aircraft_state.psi += 360/250
