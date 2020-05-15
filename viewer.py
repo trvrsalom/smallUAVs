@@ -4,7 +4,8 @@ import pyqtgraph.Vector
 import numpy as np
 
 class Viewer():
-	def __init__(self, simulation_state, aircraft_state):
+	def __init__(self, simulation_state, aircraft_state, app):
+		self.app = app
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
 		self.define_colors()
@@ -24,7 +25,7 @@ class Viewer():
 		self.window.addItem(self.right_winglet_trail)
 		self.window.addItem(self.body)
 		self.window.setCameraPosition(distance = 20);
-		self.window.setBackgroundColor('w')
+		self.window.setBackgroundColor('k')
 		self.window.show()
 		self.window.raise_()
 		self.uav_colors = self.get_uav_mesh_colors()
@@ -46,8 +47,6 @@ class Viewer():
 		self.winglet_log(self.uav_points)
 		# Draw winglet trails
 		self.draw_winglet_trails(self.simulation_state.left_winglet_log, self.simulation_state.right_winglet_log)
-		# Render
-		self.app.processEvents()
 
 	def winglet_log(self, points):
 		right_loc = points[5]
@@ -136,3 +135,6 @@ class Viewer():
 	def inertial_to_body(self):
 		R = self.vehicle_to_vehicle_one() @ self.vehicle_one_to_vehicle_two() @ self.vehicle_two_to_body()
 		return R
+
+	def quit(self):
+		self.app.quit()

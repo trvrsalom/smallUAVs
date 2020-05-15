@@ -1,4 +1,5 @@
 import sys
+import pyqtgraph as pg
 from Viewer import Viewer
 from importlib import import_module
 from dataclasses.SimulationState import SimulationState
@@ -8,9 +9,14 @@ from utils import angles
 import numpy as np
 import math
 import Simulation
+from utils.Log import Log
+from Plotter import Plotter
+import faulthandler
 
 class Simulation:
 	def __init__(self, simfile=None):
+		faulthandler.enable()
+		self.app = pg.QtGui.QApplication([])
 		self.simulation_state = SimulationState()
 		self.aircraft_state = AircraftState()
 		self.aircraft_state.set_airframe(Zagi())
@@ -25,8 +31,7 @@ class Simulation:
 		else:
 			print("No simulation file provided")
 			self.sim = None
-		if self.simulation_state.show_viewer:
-			self.viewer = Viewer(self.simulation_state, self.aircraft_state)
+		self.init_log()
 
 	def load_state(self):
 		if self.sim is not None:
@@ -34,6 +39,24 @@ class Simulation:
 				self.simulation_state.time = self.sim.time
 			if hasattr(self.sim, "delta"):
 				self.simulation_state.delta = self.sim.delta
+
+	def init_log(self):
+		time_source = lambda: self.simulation_state.curr_time
+		log = Log()
+		log.set_time_source(time_source)
+		log.add_data_source("pn", self.aircraft_state.get_pn)
+		log.add_data_source("pe", self.aircraft_state.get_pe)
+		log.add_data_source("pd", self.aircraft_state.get_pd)
+		log.add_data_source("phi", self.aircraft_state.get_phi)
+		log.add_data_source("theta", self.aircraft_state.get_theta)
+		log.add_data_source("psi", self.aircraft_state.get_psi)
+		log.add_data_source("p", self.aircraft_state.get_p)
+		log.add_data_source("q", self.aircraft_state.get_q)
+		log.add_data_source("r", self.aircraft_state.get_r)
+		log.add_data_source("u", self.aircraft_state.get_u)
+		log.add_data_source("v", self.aircraft_state.get_v)
+		log.add_data_source("w", self.aircraft_state.get_w)
+		self.log = log
 
 	def sim_loop(self):
 		while self.simulation_state.curr_time <= self.simulation_state.time:
@@ -44,15 +67,29 @@ class Simulation:
 			self.dynamics()
 			# Do kinematics
 			self.kinematics()
+			# Log the state
+			self.log.sample()
 			# Update the simulation viewer
-			if(self.simulation_state.show_viewer):
+			if self.simulation_state.show_viewer:
 				self.viewer.update()
+			if self.simulation_state.show_plotter:
+				self.plotter.update_plots()
 			self.simulation_state.curr_time += self.simulation_state.delta
-		print("Simulation completed")
+			self.app.processEvents()
+		print("Simulation completed.")
 
-	def start(self):
+	def run(self):
+		if self.simulation_state.show_viewer:
+			self.viewer = Viewer(self.simulation_state, self.aircraft_state, self.app)
+		if self.simulation_state.show_plotter:
+			self.plotter = Plotter(self.log, self.app)
 		self.load_state()
 		self.sim_loop()
+		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
+			input("Press enter to quit.")
+		pg.exit()
+		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
+			self.app.quit()
 
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.

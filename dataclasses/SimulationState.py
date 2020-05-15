@@ -8,6 +8,7 @@ class SimulationState:
 	curr_time: float = 0  # Current simulation time in seconds
 	# Show simulation viewer
 	show_viewer: bool = True
+	show_plotter: bool = True
 	# Log
 	# - Winglet Trails
 	right_winglet_log: ndarray = empty((1,3))
