@@ -38,8 +38,8 @@ class Viewer():
 	def update(self):
 		# Draw the UAV
 		self.uav_points = self.get_uav_points()
-		self.uav_points = self.translate(self.uav_points)
 		self.uav_points = self.rotate(self.uav_points)
+		self.uav_points = self.translate(self.uav_points)
 		self.uav_mesh = self.get_uav_mesh(self.uav_points)
 		self.body.setMeshData(vertexes=self.uav_mesh, faceColors=self.uav_colors)
 		# Logging
