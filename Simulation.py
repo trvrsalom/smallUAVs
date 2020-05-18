@@ -21,7 +21,8 @@ class Simulation:
 		self.aircraft_state = AircraftState()
 		self.aircraft_state.set_airframe(Zagi())
 		if simfile is not None:
-			try: 
+			try:
+				simfile = simfile.replace("/", ".").replace(".py", "")
 				print("Loading simulation file: " + simfile)
 				globals()["sim"] = import_module(simfile)
 				self.sim = sim.Sim(self.simulation_state, self.aircraft_state)
@@ -97,12 +98,12 @@ class Simulation:
 		self.export_logs()
 		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
 			input("Press enter to quit.")
-		try:
+		'''try:
 			# Hoping to catch the gross pyqt errors here
 			if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
 				self.app.quit()
 		except: 
-			pass
+			pass'''
 
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.
