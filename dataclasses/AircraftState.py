@@ -75,6 +75,24 @@ class AircraftState:
 	def get_r(self):
 		return self.r
 
+	def get_fx(self):
+		return self.fx
+
+	def get_fy(self):
+		return self.fy
+
+	def get_fz(self): 
+		return self.fz
+
+	def get_l(self):
+		return self.l
+
+	def get_m(self):
+		return self.m
+
+	def get_n(self):
+		return self.n
+
 	def set_airframe(self, airframe):
 		self.airframe = airframe
 

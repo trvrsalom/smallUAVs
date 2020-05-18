@@ -47,12 +47,12 @@ class Zagi:
 	Cl_lamdbaA: float = 0.1682
 	Cn_lambdaA: float = -0.00328
 	# Gamma values
-	gamma: float = Jx*Jz - Jxz**2
+	gamma: float = Jx*Jz - Jxz*Jxz
 	gamma1: float = (Jx*(Jx-Jy+Jz))/gamma
-	gamma2: float = ((Jz*(Jz-Jy))+Jxz**2)/gamma
+	gamma2: float = ((Jz*(Jz-Jy))+Jxz*Jxz)/gamma
 	gamma3: float = Jz/gamma
 	gamma4: float = Jxz/gamma
 	gamma5: float = (Jz-Jx)/Jy
 	gamma6: float = Jxz/Jy
-	gamma7: float = ((Jx-Jy)*Jx+Jxz**2)/gamma
+	gamma7: float = ((Jx-Jy)*Jx+Jxz*Jxz)/gamma
 	gamma8: float = Jx/gamma

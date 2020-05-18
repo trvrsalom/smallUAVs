@@ -45,18 +45,24 @@ class Simulation:
 		time_source = lambda: self.simulation_state.curr_time
 		log = Log()
 		log.set_time_source(time_source)
-		log.add_data_source("pn", self.aircraft_state.get_pn)
-		log.add_data_source("pe", self.aircraft_state.get_pe)
-		log.add_data_source("pd", self.aircraft_state.get_pd)
-		log.add_data_source("phi", self.aircraft_state.get_phi)
-		log.add_data_source("theta", self.aircraft_state.get_theta)
-		log.add_data_source("psi", self.aircraft_state.get_psi)
-		log.add_data_source("p", self.aircraft_state.get_p)
-		log.add_data_source("q", self.aircraft_state.get_q)
-		log.add_data_source("r", self.aircraft_state.get_r)
-		log.add_data_source("u", self.aircraft_state.get_u)
-		log.add_data_source("v", self.aircraft_state.get_v)
-		log.add_data_source("w", self.aircraft_state.get_w)
+		#log.add_data_source("pn", self.aircraft_state.get_pn)
+		#log.add_data_source("pe", self.aircraft_state.get_pe)
+		#log.add_data_source("pd", self.aircraft_state.get_pd)
+		#log.add_data_source("phi", self.aircraft_state.get_phi)
+		#log.add_data_source("theta", self.aircraft_state.get_theta)
+		#log.add_data_source("psi", self.aircraft_state.get_psi)
+		#log.add_data_source("p", self.aircraft_state.get_p)
+		#log.add_data_source("q", self.aircraft_state.get_q)
+		#log.add_data_source("r", self.aircraft_state.get_r)
+		#log.add_data_source("u", self.aircraft_state.get_u)
+		#log.add_data_source("v", self.aircraft_state.get_v)
+		#log.add_data_source("w", self.aircraft_state.get_w)
+		#log.add_data_source("fx", self.aircraft_state.get_fx)
+		#log.add_data_source("fy", self.aircraft_state.get_fy)
+		#log.add_data_source("fz", self.aircraft_state.get_fz)
+		log.add_data_source("l", self.aircraft_state.get_l)
+		log.add_data_source("m", self.aircraft_state.get_m)
+		log.add_data_source("n", self.aircraft_state.get_n)
 		self.log = log
 
 	def sim_loop(self):
@@ -183,11 +189,9 @@ class Simulation:
 		phi_dot,theta_dot,psi_dot = (att_to_att_dot_matrix @ np.array([p,q,r]).T).T
 
 		# Attitude accelerations
-		attitude_accel_a = np.array([airframe.gamma1*p*q - airframe.gamma2*q*r, 
-		                             airframe.gamma5*p*r - airframe.gamma6*(p**2-r**2),
-		                             airframe.gamma7*p*q - airframe.gamma1*q*r])
-		attitude_accel_b = np.array([airframe.gamma3*l + airframe.gamma4*n,m/airframe.Jy, airframe.gamma4*l + airframe.gamma8*n])
-		p_dot,q_dot,r_dot = attitude_accel_a + attitude_accel_b
+		p_dot = airframe.gamma1*p*q - airframe.gamma2*q*r + airframe.gamma3*l + airframe.gamma4*n 
+		q_dot = airframe.gamma5*p*r - airframe.gamma6*((p**2)-(r**2)) + m*1/airframe.Jy
+		r_dot = airframe.gamma7*p*q - airframe.gamma1*q*r + airframe.gamma4*l + airframe.gamma8*n
 		state_dot = np.array([
 			pn_dot, pe_dot, pd_dot,
 			u_dot, v_dot, w_dot,

@@ -6,10 +6,10 @@ class Plotter():
 		self.window = pg.GraphicsLayoutWidget()
 		self.window.setBackground("w")
 		self.window.setWindowTitle("Plotter")
-		self.window.setGeometry(750, 0, 1200, 750)
+		self.plots_per_row = 1
+		self.window.setGeometry(750, 0, self.plots_per_row*300, 750)
 		self.window.show()
 		self.window.raise_()
-		self.plots_per_row = 5
 		self.log = log
 		self.init_plots()
 		self.domain = 20
