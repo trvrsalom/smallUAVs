@@ -6,7 +6,7 @@ class Plotter():
 		self.window = pg.GraphicsLayoutWidget()
 		self.window.setBackground("w")
 		self.window.setWindowTitle("Plotter")
-		self.plots_per_row = 1
+		self.plots_per_row = 3
 		self.window.setGeometry(750, 0, self.plots_per_row*300, 750)
 		self.window.show()
 		self.window.raise_()

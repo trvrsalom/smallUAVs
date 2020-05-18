@@ -45,9 +45,9 @@ class Simulation:
 		time_source = lambda: self.simulation_state.curr_time
 		log = Log()
 		log.set_time_source(time_source)
-		#log.add_data_source("pn", self.aircraft_state.get_pn)
-		#log.add_data_source("pe", self.aircraft_state.get_pe)
-		#log.add_data_source("pd", self.aircraft_state.get_pd)
+		log.add_data_source("pn", self.aircraft_state.get_pn)
+		log.add_data_source("pe", self.aircraft_state.get_pe)
+		log.add_data_source("ASL", self.aircraft_state.get_asl)
 		#log.add_data_source("phi", self.aircraft_state.get_phi)
 		#log.add_data_source("theta", self.aircraft_state.get_theta)
 		#log.add_data_source("psi", self.aircraft_state.get_psi)
@@ -57,12 +57,12 @@ class Simulation:
 		#log.add_data_source("u", self.aircraft_state.get_u)
 		#log.add_data_source("v", self.aircraft_state.get_v)
 		#log.add_data_source("w", self.aircraft_state.get_w)
-		#log.add_data_source("fx", self.aircraft_state.get_fx)
-		#log.add_data_source("fy", self.aircraft_state.get_fy)
-		#log.add_data_source("fz", self.aircraft_state.get_fz)
-		log.add_data_source("l", self.aircraft_state.get_l)
-		log.add_data_source("m", self.aircraft_state.get_m)
-		log.add_data_source("n", self.aircraft_state.get_n)
+		log.add_data_source("fx", self.aircraft_state.get_fx)
+		log.add_data_source("fy", self.aircraft_state.get_fy)
+		log.add_data_source("fz", self.aircraft_state.get_fz)
+		#log.add_data_source("l", self.aircraft_state.get_l)
+		#log.add_data_source("m", self.aircraft_state.get_m)
+		#log.add_data_source("n", self.aircraft_state.get_n)
 		self.log = log
 
 	def sim_loop(self):
@@ -200,4 +200,18 @@ class Simulation:
 		return state_dot
 
 	def dynamics(self):
-		pass
+		self.aircraft_state.fx = 0
+		self.aircraft_state.fy = 0
+		self.aircraft_state.fz = 0
+		self.gravity()
+
+	def gravity(self):
+		m = self.aircraft_state.airframe.m
+		g = self.simulation_state.g
+		stheta = math.sin(self.aircraft_state.get_theta())
+		ctheta = math.cos(self.aircraft_state.get_theta())
+		sphi = math.sin(self.aircraft_state.get_phi())
+		cphi = math.cos(self.aircraft_state.get_phi())
+		self.aircraft_state.fx += -m*g*stheta
+		self.aircraft_state.fy += m*g*ctheta*sphi
+		self.aircraft_state.fz += m*g*ctheta*cphi

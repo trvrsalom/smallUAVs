@@ -5,7 +5,7 @@ class AircraftState:
 	# Inertial Position (meters)
 	pn: float = 0    # North
 	pe: float = 0    # East
-	pd: float = 0    # Altitude
+	pd: float = -10    # Altitude
 	# Attitude (ang_units)
 	phi: float = 0   # Roll
 	theta: float = 0 # Pitch
@@ -56,6 +56,9 @@ class AircraftState:
 
 	def get_pd(self):
 		return self.pd
+
+	def get_asl(self):
+		return -self.pd
 
 	def get_u(self):
 		return self.u

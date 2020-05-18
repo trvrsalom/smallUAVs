@@ -6,6 +6,7 @@ class SimulationState:
 	time: float = 5      # Simulation runtime in seconds
 	delta: float = 0.02  # Simulation delta in seconds
 	curr_time: float = 0  # Current simulation time in seconds
+	g: float = 9.8
 	# Show simulation viewer
 	show_viewer: bool = True
 	show_plotter: bool = True
