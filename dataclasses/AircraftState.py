@@ -26,6 +26,13 @@ class AircraftState:
 	l: float = 0     # Moment about i 
 	m: float = 0     # Moment about j
 	n: float = 0     # Moment about k
+	# Airspeed (m/s)
+	ur: float = 0    # i airspeed (forward)
+	vr: float = 0    # j airspeed (right)
+	wr: float = 0    # k airspeed (down)
+	# Wind triangle (m/s)
+	alpha: float = 0 # angle of attack
+	beta: float = 0  # sideslip
 	# Units
 	ang_units: str = "rad"
 
@@ -99,3 +106,17 @@ class AircraftState:
 	def set_airframe(self, airframe):
 		self.airframe = airframe
 
+	def get_ur(self):
+		return self.ur
+
+	def get_vr(self):
+		return self.vr
+
+	def get_wr(self):
+		return self.wr
+
+	def get_alpha(self):
+		return self.alpha
+
+	def get_beta(self):
+		return self.beta

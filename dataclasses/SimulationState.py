@@ -27,3 +27,12 @@ class SimulationState:
 		ret += "\n\tRuntime: " + str(self.time)
 		ret += "\n\tDelta: " + str(self.delta)
 		return ret
+
+	def get_wn(self):
+		return self.wn
+
+	def get_we(self): 
+		return self.we
+
+	def get_wd(self):
+		return self.wd

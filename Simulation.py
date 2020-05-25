@@ -49,8 +49,12 @@ class Simulation:
 		log.add_dataset("Attitude (rad)", ["ϕ", "ϴ", "ψ"], [self.aircraft_state.get_phi, self.aircraft_state.get_theta, self.aircraft_state.get_psi])
 		log.add_dataset("Attitude Rates (rad/s)", ["p","q","r"], [self.aircraft_state.get_p, self.aircraft_state.get_q, self.aircraft_state.get_r])
 		log.add_dataset("Body Velocity (m/s)", ["u", "v", "w"], [self.aircraft_state.get_u, self.aircraft_state.get_v, self.aircraft_state.get_w])
+		log.add_dataset("Airspeed (m/s)", ["ur", "vr", "wr"], [self.aircraft_state.get_ur, self.aircraft_state.get_vr, self.aircraft_state.get_wr])
 		log.add_dataset("Body Frame Forces (N)", ["fx", "fy", "fz"], [self.aircraft_state.get_fx, self.aircraft_state.get_fy, self.aircraft_state.get_fz])
 		log.add_dataset("Body Moments (Nm)", ["l", "m", "n"], [self.aircraft_state.get_l, self.aircraft_state.get_m, self.aircraft_state.get_n])
+		log.add_dataset("Wind (m/s)", ["wn", "we", "wd"], [self.simulation_state.get_wn, self.simulation_state.get_we, self.simulation_state.get_wd])
+		log.add_dataset("Wind Triangle (m/s)", ["α", "β"], [self.aircraft_state.get_alpha, self.aircraft_state.get_beta])
+		
 		self.log = log
 
 	def sim_loop(self):
@@ -59,6 +63,8 @@ class Simulation:
 			# Check the control file for updates
 			if self.sim is not None:
 				self.sim.update()
+			# Update stability frame
+			self.update_stability_frame()
 			# Calculate forces
 			self.dynamics()
 			# Do kinematics
@@ -204,3 +210,45 @@ class Simulation:
 		self.aircraft_state.fx += -m*g*stheta
 		self.aircraft_state.fy += m*g*ctheta*sphi
 		self.aircraft_state.fz += m*g*ctheta*cphi
+
+	def update_stability_frame(self):
+		relative_wind = self.inertial_to_body().T @ np.array([self.simulation_state.wn, self.simulation_state.we, self.simulation_state.wd]).T
+		self.aircraft_state.ur = self.aircraft_state.u - relative_wind[0]
+		self.aircraft_state.vr = self.aircraft_state.v - relative_wind[1]
+		self.aircraft_state.wr = self.aircraft_state.w - relative_wind[2]
+		self.aircraft_state.alpha = -np.arctan2(self.aircraft_state.wr, self.aircraft_state.ur)
+		self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2))
+
+	def vehicle_to_vehicle_one(self):
+		cp = np.cos(self.aircraft_state.get_psi())
+		sp = np.sin(self.aircraft_state.get_psi())
+		R = np.array([
+			[cp, -sp, 0],
+			[sp,  cp, 0],
+			[ 0,   0, 1]
+		])
+		return R.T
+
+	def vehicle_one_to_vehicle_two(self):
+		ct = np.cos(self.aircraft_state.get_theta())
+		st = np.sin(self.aircraft_state.get_theta())
+		R = np.array([
+			[ ct, 0, st],
+			[  0, 1,  0],
+			[-st, 0, ct]
+		])
+		return R.T
+
+	def vehicle_two_to_body(self):
+		cp = np.cos(self.aircraft_state.get_phi())
+		sp = np.sin(self.aircraft_state.get_phi())
+		R = np.array([
+			[1,  0, 0],
+			[0, cp,sp],
+			[0,-sp,cp]
+		])
+		return R.T
+
+	def inertial_to_body(self):
+		R = self.vehicle_to_vehicle_one() @ self.vehicle_one_to_vehicle_two() @ self.vehicle_two_to_body()
+		return R
