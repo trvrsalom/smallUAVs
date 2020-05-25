@@ -7,6 +7,10 @@ class SimulationState:
 	delta: float = 0.02  # Simulation delta in seconds
 	curr_time: float = 0  # Current simulation time in seconds
 	g: float = 9.8
+	# Wind paramters
+	wn: float = 0
+	we: float = 0
+	wd: float = 0
 	# Show simulation viewer
 	show_viewer: bool = True
 	show_plotter: bool = True

@@ -45,24 +45,12 @@ class Simulation:
 		time_source = lambda: self.simulation_state.curr_time
 		log = Log()
 		log.set_time_source(time_source)
-		log.add_data_source("pn", self.aircraft_state.get_pn)
-		log.add_data_source("pe", self.aircraft_state.get_pe)
-		log.add_data_source("ASL", self.aircraft_state.get_asl)
-		#log.add_data_source("phi", self.aircraft_state.get_phi)
-		#log.add_data_source("theta", self.aircraft_state.get_theta)
-		#log.add_data_source("psi", self.aircraft_state.get_psi)
-		#log.add_data_source("p", self.aircraft_state.get_p)
-		#log.add_data_source("q", self.aircraft_state.get_q)
-		#log.add_data_source("r", self.aircraft_state.get_r)
-		#log.add_data_source("u", self.aircraft_state.get_u)
-		#log.add_data_source("v", self.aircraft_state.get_v)
-		#log.add_data_source("w", self.aircraft_state.get_w)
-		log.add_data_source("fx", self.aircraft_state.get_fx)
-		log.add_data_source("fy", self.aircraft_state.get_fy)
-		log.add_data_source("fz", self.aircraft_state.get_fz)
-		#log.add_data_source("l", self.aircraft_state.get_l)
-		#log.add_data_source("m", self.aircraft_state.get_m)
-		#log.add_data_source("n", self.aircraft_state.get_n)
+		log.add_dataset("Inertial Position (m)", ["pn", "pe", "-pd"], [self.aircraft_state.get_pn, self.aircraft_state.get_pe, lambda: -1*self.aircraft_state.get_pd()])
+		log.add_dataset("Attitude (rad)", ["ϕ", "ϴ", "ψ"], [self.aircraft_state.get_phi, self.aircraft_state.get_theta, self.aircraft_state.get_psi])
+		log.add_dataset("Attitude Rates (rad/s)", ["p","q","r"], [self.aircraft_state.get_p, self.aircraft_state.get_q, self.aircraft_state.get_r])
+		log.add_dataset("Body Velocity (m/s)", ["u", "v", "w"], [self.aircraft_state.get_u, self.aircraft_state.get_v, self.aircraft_state.get_w])
+		log.add_dataset("Body Frame Forces (N)", ["fx", "fy", "fz"], [self.aircraft_state.get_fx, self.aircraft_state.get_fy, self.aircraft_state.get_fz])
+		log.add_dataset("Body Moments (Nm)", ["l", "m", "n"], [self.aircraft_state.get_l, self.aircraft_state.get_m, self.aircraft_state.get_n])
 		self.log = log
 
 	def sim_loop(self):
@@ -101,7 +89,7 @@ class Simulation:
 			self.plotter = Plotter(self.log, self.app)
 		self.load_state()
 		self.sim_loop()
-		self.export_logs()
+		#self.export_logs()
 		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
 			input("Press enter to quit.")
 		'''try:
@@ -113,6 +101,7 @@ class Simulation:
 
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.
+		# TODO: Try quaternions again another time
 		# Also math will be easier with an array than an object
 		state = self.aircraft_state
 		#e = angles.euler_to_quaternion(state.get_phi(), state.get_theta(), state.get_psi())

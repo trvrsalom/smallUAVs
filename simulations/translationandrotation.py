@@ -9,6 +9,7 @@ class Sim:
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
 		self.simulation_state.trail_length = 7*self.len
+		self.simulation_state.g = 0
 		
 	def update(self):
 		if self.simulation_state.curr_time <= 5:

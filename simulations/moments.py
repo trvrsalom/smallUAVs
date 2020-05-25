@@ -7,6 +7,7 @@ class Sim:
 		self.delta = 0.02 # Simulation delta in seconds
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
+		self.simulation_state.g = 0
 		
 	def update(self):
 		# Try testing with Jxz at 0 and default to test yaw/roll coupling

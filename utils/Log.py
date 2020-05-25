@@ -1,5 +1,48 @@
 class Log:
 	def __init__(self):
+		self.datasets = {}
+		self.time_points = []
+
+	def set_time_source(self, source):
+		self.time_source = source
+
+	def add_dataset(self, label, names, sources):
+		if ((type(names) == type([]) and type(sources) != type([])) or (type(names) != type([]) and type(sources) == type([]))):
+			return # Add error handling here eventually
+		elif(len(names) != len(sources)):
+			return # And here
+		else:
+			if(type(sources) == type([])):
+				self.datasets[label] = {};
+				self.datasets[label]["legend"] = names
+				for i in range(0, len(names)):
+					name = names[i]
+					source = sources[i]
+					self.datasets[label][name] = {}
+					self.datasets[label][name]["name"] = name
+					self.datasets[label][name]["source"] = source
+					self.datasets[label][name]["points"] = []
+
+	def sample(self):
+		self.time_points.append(self.time_source())
+		for dataset in self.datasets:
+			for data in self.datasets[dataset]["legend"]:
+				self.datasets[dataset][data]["points"].append(self.datasets[dataset][data]["source"]())
+
+	def get_dataset_labels(self):
+		return ["time"] + list(self.datasets.keys())
+
+	def get_dataset(self, label):
+		if label == "time":
+			return self.time_points
+		elif label in self.datasets.keys():
+			return self.datasets[label]
+		else: 
+			pass # TODO: error handling
+
+
+'''class Log:
+	def __init__(self):
 		self.time_points = []
 		self.data_points = []
 		self.data_sources = []
@@ -12,7 +55,11 @@ class Log:
 	def set_time_source(self, source):
 		self.time_source = source
 
-	def add_data_source(self, name, source):
+	def add_data_source(self, name, source, label=None):
+		if type(source) == type([]) && type(name) == type([]):
+			self.data_names.append
+			for i in range(0, len(name)):
+				self.data
 		self.data_sources.append(source)
 		self.data_names.append(name)
 		self.data_points.append([])
@@ -47,3 +94,4 @@ class Log:
 			line = line[:-1] + "\n"
 			f.write(line)
 		f.close()
+'''

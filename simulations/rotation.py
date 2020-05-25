@@ -6,6 +6,7 @@ class Sim:
 		self.delta = 0.02 # Simulation delta in seconds
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
+		self.simulation_state.g = 0
 
 	def update(self):
 		if self.simulation_state.curr_time <= 5:
