@@ -33,6 +33,10 @@ class AircraftState:
 	# Wind triangle (m/s)
 	alpha: float = 0 # angle of attack
 	beta: float = 0  # sideslip
+	# Control Surfaces
+	dA: float = 0    # alieron deflection
+	dE: float = 0    # elevator deflection
+	dR: float = 0    # rudder deflection
 	# Units
 	ang_units: str = "rad"
 
@@ -40,6 +44,7 @@ class AircraftState:
 	# Defining getters so that we can switch units on the fly.
 	# Internal simulation/visualization units will be np defaults.
 	# Will also need setters, which I forgot todo in advance, so that'll suck
+	# if we ever get around to making units work nicely
 	def get_phi(self):
 		if(self.ang_units == "deg"):
 			return math.radians(self.phi)
