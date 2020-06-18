@@ -217,7 +217,10 @@ class Simulation:
 		self.aircraft_state.vr = self.aircraft_state.v - relative_wind[1]
 		self.aircraft_state.wr = self.aircraft_state.w - relative_wind[2]
 		self.aircraft_state.alpha = -np.arctan2(self.aircraft_state.wr, self.aircraft_state.ur)
-		self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2))
+		if self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2 != 0 and not np.isnan(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2)):
+			self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2))
+		else:
+			self.aircraft_state.beta = 0
 
 	def vehicle_to_vehicle_one(self):
 		cp = np.cos(self.aircraft_state.get_psi())
