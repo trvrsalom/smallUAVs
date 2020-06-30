@@ -10,7 +10,7 @@ class Zagi:
 	b: float = 1.4224 #m
 	c: float = 0.3302 #m
 	Sprop: float = 0.0314 #m^2
-	p: float = 1.2682 #kg/m^3
+	rho: float = 1.2682 #kg/m^3
 	kmotor: float = 20
 	kTp: float = 0
 	kOmega: float = 0
@@ -56,3 +56,4 @@ class Zagi:
 	gamma6: float = Jxz/Jy
 	gamma7: float = ((Jx-Jy)*Jx+Jxz*Jxz)/gamma
 	gamma8: float = Jx/gamma
+	AR: float = (b**2)/S

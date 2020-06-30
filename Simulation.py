@@ -105,6 +105,42 @@ class Simulation:
 		except: 
 			pass'''
 
+	def longitudinal_dynamics(self):
+		uav = self.aircraft_state
+		model = uav.airframe
+
+		const = 0.5*model.rho*(uav.va**2)*model.S
+		e_plus = np.exp(model.M * (uav.alpha + model.alpha0))
+		e_minus = np.exp(-model.M * (uav.alpha - model.alpha0))
+		s_alpha = np.sin(uav.alpha)
+		c_alpha = np.cos(uav.alpha)
+		sigma = (1 + e_minus + e_plus) / ((1 + e_minus) * (1 + e_plus))
+		CL = (1 - sigma)*(model.CL0 + model.CLa*uav.alpha) + sigma*(2*np.sign(uav.alpha)*(s_alpha**2)*c_alpha)
+		CD = model.CDp + ((model.CL0 + model.CLa*uav.alpha)**2) / (np.pi*model.e*model.AR)
+		if uav.va != 0:
+			c_prime = model.c / (2 * uav.va)
+		else: 
+			c_prime = 0
+
+		lift = const * (CL + model.CLq * c_prime * uav.q + model.CL_lambdaE * uav.dE)
+		drag = const * (CD + model.CDq * c_prime * uav.q + model.CD_lambdaE * uav.dE)
+		m = const * model.c * (model.Cm0 + model.Cma * uav.alpha + model.Cmq * c_prime * uav.q + model.Cm_lambdaE * uav.dE)
+
+		if uav.va == 0:
+			self.aircraft_state.fx += 0
+			self.aircraft_state.fz += 0
+			self.aircraft_state.m += 0
+		else:
+			self.aircraft_state.fx += -drag*c_alpha + lift*s_alpha
+			self.aircraft_state.fz += -drag*s_alpha - lift*c_alpha
+			self.aircraft_state.m += m
+
+	def lateral_dynamics(self):
+		pass
+
+	def motor_dynamics(self):
+		pass
+
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.
 		# TODO: Try quaternions again another time
@@ -140,7 +176,7 @@ class Simulation:
 		self.aircraft_state.phi = next_state[6]
 		self.aircraft_state.theta = next_state[7]
 		self.aircraft_state.psi = next_state[8]
-		self.aircraft_state.p = next_state[9]
+		self.aircraft_state.rho = next_state[9]
 		self.aircraft_state.q = next_state[10]
 		self.aircraft_state.r = next_state[11]
 
@@ -199,6 +235,9 @@ class Simulation:
 		self.aircraft_state.fy = 0
 		self.aircraft_state.fz = 0
 		self.gravity()
+		self.longitudinal_dynamics()
+		self.lateral_dynamics()
+		self.motor_dynamics()
 
 	def gravity(self):
 		m = self.aircraft_state.airframe.m
@@ -216,6 +255,7 @@ class Simulation:
 		self.aircraft_state.ur = self.aircraft_state.u - relative_wind[0]
 		self.aircraft_state.vr = self.aircraft_state.v - relative_wind[1]
 		self.aircraft_state.wr = self.aircraft_state.w - relative_wind[2]
+		self.aircraft_state.va = np.sqrt(self.aircraft_state.ur**2 + self.aircraft_state.vr**2 + self.aircraft_state.wr**2)
 		self.aircraft_state.alpha = -np.arctan2(self.aircraft_state.wr, self.aircraft_state.ur)
 		if self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2 != 0 and not np.isnan(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2)):
 			self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2))

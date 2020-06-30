@@ -30,6 +30,7 @@ class AircraftState:
 	ur: float = 0    # i airspeed (forward)
 	vr: float = 0    # j airspeed (right)
 	wr: float = 0    # k airspeed (down)
+	va: float = 0    # Net airspeed
 	# Wind triangle (m/s)
 	alpha: float = 0 # angle of attack
 	beta: float = 0  # sideslip
