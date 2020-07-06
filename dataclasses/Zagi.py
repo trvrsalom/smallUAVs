@@ -24,9 +24,9 @@ class Zagi:
 	CLq: float = 2.8932
 	CDq: float = 0
 	Cmq: float = -1.3990
-	CL_lambdaE: float = 0.2724
-	CD_lambdaE: float = 0.3045
-	Cm_lambdaE: float = -0.3254
+	CL_deltaE: float = 0.2724
+	CD_deltaE: float = 0.3045
+	Cm_deltaE: float = -0.3254
 	Cprop: float = 1.0
 	M: float = 50
 	alpha0: float = 0.4712
@@ -37,15 +37,19 @@ class Zagi:
 	Cn0: float = 0
 	CYB: float = -0.07359
 	ClB: float = -0.02854
+	CnB: float = -0.00040
 	CYp: float = 0
 	Clp: float = -0.3209
 	Cnp: float = -0.01297
 	CYr: float = 0
 	Clr: float = 0.03066
 	Cnr: float = -0.00434
-	CY_lambdaA: float = 0
-	Cl_lamdbaA: float = 0.1682
-	Cn_lambdaA: float = -0.00328
+	CY_deltaA: float = 0
+	Cl_deltaA: float = 0.1682
+	Cn_deltaA: float = -0.00328
+	CY_deltaR: float = 0
+	Cl_deltaR: float = 0
+	Cn_deltaR: float = 0
 	# Gamma values
 	gamma: float = Jx*Jz - Jxz*Jxz
 	gamma1: float = (Jx*(Jx-Jy+Jz))/gamma

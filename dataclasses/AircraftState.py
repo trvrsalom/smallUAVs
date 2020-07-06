@@ -38,6 +38,7 @@ class AircraftState:
 	dA: float = 0    # alieron deflection
 	dE: float = 0    # elevator deflection
 	dR: float = 0    # rudder deflection
+	dT: float = 0    # throttle "deflection"
 	# Units
 	ang_units: str = "rad"
 

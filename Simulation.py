@@ -12,6 +12,9 @@ import Simulation
 from utils.Log import Log
 from Plotter import Plotter
 import faulthandler
+import traceback
+from colored import fg, bg, attr
+import warnings
 
 class Simulation:
 	def __init__(self, simfile=None):
@@ -32,6 +35,7 @@ class Simulation:
 		else:
 			print("No simulation file provided")
 			self.sim = None
+		self.load_state()
 		self.init_log()
 
 	def load_state(self):
@@ -54,11 +58,14 @@ class Simulation:
 		log.add_dataset("Body Moments (Nm)", ["l", "m", "n"], [self.aircraft_state.get_l, self.aircraft_state.get_m, self.aircraft_state.get_n])
 		log.add_dataset("Wind (m/s)", ["wn", "we", "wd"], [self.simulation_state.get_wn, self.simulation_state.get_we, self.simulation_state.get_wd])
 		log.add_dataset("Wind Triangle (m/s)", ["α", "β"], [self.aircraft_state.get_alpha, self.aircraft_state.get_beta])
-		
 		self.log = log
 
 	def sim_loop(self):
 		print("Starting simulation.")
+		print("\t- Simulation Time: " + str(self.simulation_state.time))
+		print("\t- delta T: " + str(self.simulation_state.delta))
+		if self.sim is not None:
+			self.sim.start()
 		while self.simulation_state.curr_time <= self.simulation_state.time:
 			# Check the control file for updates
 			if self.sim is not None:
@@ -93,54 +100,71 @@ class Simulation:
 			self.viewer = Viewer(self.simulation_state, self.aircraft_state, self.app)
 		if self.simulation_state.show_plotter:
 			self.plotter = Plotter(self.log, self.app)
-		self.load_state()
 		self.sim_loop()
-		#self.export_logs()
-		if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
+		self.export_logs()
+		if not self.simulation_state.show_plotter and self.simulation_state.aar:
+			self.plotter = Plotter(self.log, self.app)
+			self.plotter.update_plots()
+			self.app.processEvents()
+			print("Opening After Action Report")
+		if self.simulation_state.show_viewer or self.simulation_state.show_plotter or self.simulation_state.aar:
 			input("Press enter to quit.")
-		'''try:
-			# Hoping to catch the gross pyqt errors here
-			if self.simulation_state.show_viewer or self.simulation_state.show_plotter:
-				self.app.quit()
-		except: 
-			pass'''
+			if self.simulation_state.show_viewer:
+				self.viewer.window.close()
+			if self.simulation_state.show_plotter or self.simulation_state.aar:
+				self.plotter.window.close()
+			self.app.quit()
+	
+	def aerodynamic_forces(self):
+		model = self.aircraft_state.airframe
+		s_alpha = np.sin(self.aircraft_state.alpha)
+		c_alpha = np.cos(self.aircraft_state.alpha)
 
-	def longitudinal_dynamics(self):
-		uav = self.aircraft_state
-		model = uav.airframe
 
-		const = 0.5*model.rho*(uav.va**2)*model.S
-		e_plus = np.exp(model.M * (uav.alpha + model.alpha0))
-		e_minus = np.exp(-model.M * (uav.alpha - model.alpha0))
-		s_alpha = np.sin(uav.alpha)
-		c_alpha = np.cos(uav.alpha)
+		# Eq 4.12/4.13 [1] (Simplified model)
+		CL = model.CL0 + model.CLa*self.aircraft_state.alpha
+		CD = model.CD0 + model.CDa*self.aircraft_state.alpha
+
+		# Eq 4.19 [1]
+		CX = -CD*c_alpha + CL*s_alpha
+		CXq = -model.CDq*c_alpha + model.CLq*s_alpha
+		CXdE = -model.CD_deltaE*c_alpha + model.CL_deltaE*s_alpha
+		CZ = -CD*s_alpha - CL*c_alpha
+		CZq = -model.CDq*s_alpha - model.CLq*c_alpha
+		CZdE = -model.CD_deltaE*s_alpha - model.CL_deltaE*c_alpha
+
+		e_minus = np.exp(-model.M * (self.aircraft_state.alpha - model.alpha0))
+		e_plus = np.exp(model.M * (self.aircraft_state.alpha + model.alpha0))
 		sigma = (1 + e_minus + e_plus) / ((1 + e_minus) * (1 + e_plus))
-		CL = (1 - sigma)*(model.CL0 + model.CLa*uav.alpha) + sigma*(2*np.sign(uav.alpha)*(s_alpha**2)*c_alpha)
-		CD = model.CDp + ((model.CL0 + model.CLa*uav.alpha)**2) / (np.pi*model.e*model.AR)
-		if uav.va != 0:
-			c_prime = model.c / (2 * uav.va)
-		else: 
-			c_prime = 0
+		CL = (1 - sigma)*(model.Cl0 + model.CLa*self.aircraft_state.alpha) + sigma*(2*np.sign(self.aircraft_state.alpha)*(np.sin(self.aircraft_state.alpha)**2)*np.cos(self.aircraft_state.alpha))
+		CD = model.CDp+((model.CL0 + model.CLa*self.aircraft_state.alpha)**2)/(np.pi*model.e*model.AR)
 
-		lift = const * (CL + model.CLq * c_prime * uav.q + model.CL_lambdaE * uav.dE)
-		drag = const * (CD + model.CDq * c_prime * uav.q + model.CD_lambdaE * uav.dE)
-		m = const * model.c * (model.Cm0 + model.Cma * uav.alpha + model.Cmq * c_prime * uav.q + model.Cm_lambdaE * uav.dE)
-
-		if uav.va == 0:
-			self.aircraft_state.fx += 0
-			self.aircraft_state.fz += 0
-			self.aircraft_state.m += 0
-		else:
-			self.aircraft_state.fx += -drag*c_alpha + lift*s_alpha
-			self.aircraft_state.fz += -drag*s_alpha - lift*c_alpha
-			self.aircraft_state.m += m
-
-	def lateral_dynamics(self):
-		pass
-
-	def motor_dynamics(self):
-		pass
-
+		# Eq 4.18 [1] 
+		air_const = 0.5*model.rho*(self.aircraft_state.va**2)*model.S
+		if self.aircraft_state.va == 0: return # No speed, no aero
+		spd_const = model.c/(2*self.aircraft_state.va)
+		#dFx = air_const*(CX + CXq*model.c/(2*self.aircraft_state.va)*self.aircraft_state.q + CXdE*self.aircraft_state.dE)
+		#dFy = air_const*(model.CY0 + model.CYB*self.aircraft_state.beta + model.CYp*model.b/(2*self.aircraft_state.va)*self.aircraft_state.p + model.CYr*model.b/(2*self.aircraft_state.va)*self.aircraft_state.r + model.CY_deltaA*self.aircraft_state.dA + model.CY_deltaR*self.aircraft_state.dR)
+		#dFz = air_const*(CZ + CZq*model.c/(2*self.aircraft_state.va)*self.aircraft_state.q + CZdE*self.aircraft_state.dE)
+		lift = air_const*(CL + model.CLq*spd_const*self.aircraft_state.q + model.CL_deltaE*self.aircraft_state.dE)
+		drag = air_const*(CD + model.CDq*spd_const*self.aircraft_state.q + model.CD_deltaE*self.aircraft_state.dE)
+		m = air_const*model.c*(model.Cm0 + model.Cma*self.aircraft_state.alpha + model.Cmq*spd_const*self.aircraft_state.q + model.Cm_deltaE*self.aircraft_state.dE)
+		dFy = air_const*(model.CY0 + model.CYB*self.aircraft_state.beta + model.CYp*model.b/(2*self.aircraft_state.va)*self.aircraft_state.p + model.CYr*model.b/(2*self.aircraft_state.va)*self.aircraft_state.r + model.CY_deltaA*self.aircraft_state.dA + model.CY_deltaR*self.aircraft_state.dR)
+		dFx = -drag*c_alpha + lift*s_alpha
+		dFz = -drag*s_alpha - lift*c_alpha
+		self.aircraft_state.fx += dFx
+		self.aircraft_state.fy += dFy
+		self.aircraft_state.fz -= dFz
+	
+	def aerodynamic_moments(self):
+		# Eq 4.20 [1] 
+		model = self.aircraft_state.airframe
+		if self.aircraft_state.va == 0: return # No speed, no aero
+		air_const = 0.5*model.rho*(self.aircraft_state.va**2)*model.S
+		self.aircraft_state.l += air_const*model.b*(model.Cl0 + model.ClB*self.aircraft_state.beta + model.Clp*model.b*self.aircraft_state.p/(2*self.aircraft_state.va) + model.Clr*model.b*self.aircraft_state.r/(2*self.aircraft_state.va) + model.Cl_deltaA*self.aircraft_state.dA + model.Cl_deltaR*self.aircraft_state.dR)
+		self.aircraft_state.m -= air_const*model.c*(model.Cm0 + model.Cma*self.aircraft_state.alpha + model.Cmq*model.c*self.aircraft_state.q/(2*self.aircraft_state.va) + model.Cm_deltaE*self.aircraft_state.dE)
+		self.aircraft_state.n += air_const*model.b*(model.Cn0 + model.CnB*self.aircraft_state.beta + model.Cnp*model.b*self.aircraft_state.p/(2*self.aircraft_state.va) + model.Cnr*model.b*self.aircraft_state.r/(2*self.aircraft_state.va) + model.Cn_deltaA*self.aircraft_state.dA + model.Cn_deltaR*self.aircraft_state.dR)
+	
 	def kinematics(self):
 		# Create a temporary state with quaternions instead of euler coordinates.
 		# TODO: Try quaternions again another time
@@ -155,12 +179,15 @@ class Simulation:
 			state.get_p(), state.get_q(), state.get_r()])
 		# RK4
 		h = self.simulation_state.delta
-		k1 = self.find_dots(quat_state)
-		k2 = self.find_dots(quat_state + (h/2.)*k1)
-		k3 = self.find_dots(quat_state + (h/2.)*k2)
-		k4 = self.find_dots(quat_state + h*k3)
+		k1 = self.find_derivatives(quat_state)
+		k2 = self.find_derivatives(quat_state + (h/2.)*k1)
+		k3 = self.find_derivatives(quat_state + (h/2.)*k2)
+		k4 = self.find_derivatives(quat_state + h*k3)
 		ksum = (h/6.)*(k1 + 2.*k2 + 2.*k3 + k4)
-		next_state = quat_state + ksum#h*self.find_dots(quat_state)#ksum
+		next_state = quat_state + ksum
+		# Euler for debugging
+		x = h*self.find_derivatives(quat_state)
+		#next_state = quat_state + x
 
 		# Make sure that it's a unit quaternion. [1] Appendix B
 		#next_state[6:10] = angles.normal(*next_state[6:10])
@@ -176,11 +203,11 @@ class Simulation:
 		self.aircraft_state.phi = next_state[6]
 		self.aircraft_state.theta = next_state[7]
 		self.aircraft_state.psi = next_state[8]
-		self.aircraft_state.rho = next_state[9]
+		self.aircraft_state.p = next_state[9]
 		self.aircraft_state.q = next_state[10]
 		self.aircraft_state.r = next_state[11]
 
-	def find_dots(self, state): 
+	def find_derivatives(self, state): 
 		# Find the derivatives of the internal state array from state forces
 		# Unpack the state array
 		pn,pe,pd,u,v,w,phi,theta,psi,p,q,r = state
@@ -231,13 +258,23 @@ class Simulation:
 		return state_dot
 
 	def dynamics(self):
+		self.zero_dynamics()
+		self.gravity()
+		self.aerodynamic_forces()
+		self.aerodynamic_moments()
+		self.motor_forces()
+
+	def motor_forces(self):
+		model = self.aircraft_state.airframe
+		self.aircraft_state.fx += 0.5*model.rho*model.Sprop*model.Cprop*(((model.kmotor*self.aircraft_state.dT)**2) - (self.aircraft_state.va**2))
+
+	def zero_dynamics(self):
 		self.aircraft_state.fx = 0
 		self.aircraft_state.fy = 0
 		self.aircraft_state.fz = 0
-		self.gravity()
-		self.longitudinal_dynamics()
-		self.lateral_dynamics()
-		self.motor_dynamics()
+		self.aircraft_state.l = 0
+		self.aircraft_state.m = 0
+		self.aircraft_state.n = 0
 
 	def gravity(self):
 		m = self.aircraft_state.airframe.m
@@ -255,10 +292,10 @@ class Simulation:
 		self.aircraft_state.ur = self.aircraft_state.u - relative_wind[0]
 		self.aircraft_state.vr = self.aircraft_state.v - relative_wind[1]
 		self.aircraft_state.wr = self.aircraft_state.w - relative_wind[2]
-		self.aircraft_state.va = np.sqrt(self.aircraft_state.ur**2 + self.aircraft_state.vr**2 + self.aircraft_state.wr**2)
+		self.aircraft_state.va = np.linalg.norm([self.aircraft_state.ur, self.aircraft_state.vr, self.aircraft_state.wr])#np.sqrt(self.aircraft_state.ur**2 + self.aircraft_state.vr**2 + self.aircraft_state.wr**2)
 		self.aircraft_state.alpha = -np.arctan2(self.aircraft_state.wr, self.aircraft_state.ur)
-		if self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2 != 0 and not np.isnan(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2)):
-			self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/np.sqrt(self.aircraft_state.vr**2 + self.aircraft_state.wr**2 + self.aircraft_state.ur**2))
+		if self.aircraft_state.va != 0 and not np.isnan(self.aircraft_state.vr/self.aircraft_state.va):
+			self.aircraft_state.beta = np.arcsin(self.aircraft_state.vr/self.aircraft_state.va)
 		else:
 			self.aircraft_state.beta = 0
 

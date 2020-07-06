@@ -40,6 +40,28 @@ class Log:
 		else: 
 			pass # TODO: error handling
 
+	def export_csv(self, file):
+		f = open(file, "w")
+		line = ""
+		for title in self.get_dataset_labels():
+			if title != "time":
+				for subtitle in self.get_dataset(title)["legend"]:
+					line = line + str(title + " - " + subtitle) + "," 
+			else:
+				line = line + str(title) + ","
+		line = line[:-1] + "\n"
+		f.write(line)
+		for idx in range(0, len(self.time_points)):
+			line = ""
+			for title in self.get_dataset_labels():
+				if title != "time":
+				 for subtitle in self.get_dataset(title)["legend"]:
+				 	line = line + str(self.get_dataset(title)[subtitle]["points"][idx]) + ","
+				else:
+					line = line + str(self.get_dataset(title)[idx]) + ","
+			f.write(line + "\n")
+		f.close()
+
 
 '''class Log:
 	def __init__(self):

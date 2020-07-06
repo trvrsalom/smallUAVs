@@ -6,6 +6,13 @@ class Sim:
 		self.delta = 0.02 # Simulation delta in seconds
 		self.simulation_state = simulation_state
 		self.aircraft_state = aircraft_state
+
+	def start(self):
+		#self.aircraft_state.theta = math.pi/4
+		#self.aircraft_state.u = 10
 		
 	def update(self):
-		self.aircraft_state.fx = -10
+		self.simulation_state.wn = 0
+		self.aircraft_state.dT = 1
+		self.aircraft_state.dE = 0.3
+		self.aircraft_state.dA = 0.1

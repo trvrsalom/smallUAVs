@@ -14,6 +14,7 @@ class SimulationState:
 	# Show simulation viewer
 	show_viewer: bool = True
 	show_plotter: bool = True
+	aar: bool = False
 	# Log
 	# - Winglet Trails
 	right_winglet_log: ndarray = empty((1,3))

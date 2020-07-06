@@ -1,4 +1,5 @@
 import pyqtgraph as pg
+import numpy as np
 
 class Plotter():
 	def __init__(self, log, app):
@@ -36,7 +37,7 @@ class Plotter():
 			legend = plot.addLegend()
 			for name in dataset["legend"]:
 				color = self.colors[plot_item_ct % len(self.colors)]
-				plot_item = pg.PlotDataItem(self.time_log, [], name=name,  pen={"width": 3, "color": color})
+				plot_item = pg.PlotDataItem(self.time_log, np.zeros(len(self.time_log)), name=name,  pen={"width": 3, "color": color})
 				plot.addItem(plot_item)
 				legend.setParentItem(plot)
 				self.plots[title]["items"][name] = plot_item
