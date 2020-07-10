@@ -1,6 +1,6 @@
 # UAV Control
 
-An ongoing project to develop a control system for a small fixed wing model aircraft, specifcally the [FT Versa Wing Pusher](https://www.flitetest.com/articles/ft-versa-wing-build), primarily using ["Small Unmanned Aircraft: Theory and Practice"](https://uavbook.byu.edu/doku.php) by R. Beard & T. McClain
+An ongoing project (started during covid lockdown) to develop a control system for a small fixed wing model aircraft, specifcally the [FT Versa Wing Pusher](https://www.flitetest.com/articles/ft-versa-wing-build), primarily using ["Small Unmanned Aircraft: Theory and Practice"](https://uavbook.byu.edu/doku.php) by R. Beard & T. McClain
 
 Current Project State: Finalizing aircraft simulator.
 
