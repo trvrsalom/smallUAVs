@@ -9,10 +9,10 @@ class Sim:
 
 	def start(self):
 		#self.aircraft_state.theta = math.pi/4
-		#self.aircraft_state.u = 10
+		self.aircraft_state.u = 10
 		
 	def update(self):
 		self.simulation_state.wn = 0
 		self.aircraft_state.dT = 1
-		self.aircraft_state.dE = 0.3
-		self.aircraft_state.dA = 0.1
+		self.aircraft_state.dE = 0.4
+		#self.aircraft_state.dA = 0.1
